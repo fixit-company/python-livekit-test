@@ -9,23 +9,23 @@ import json
 
 app = Flask(__name__)
 
-# Загружаем переменные окружения из корневой директории
+# Load environment variables from root directory
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
-# Получаем API ключ из переменных окружения
+# Get API key from environment variables
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Максимальная допустимая длина аудио в секундах
+# Maximum allowed audio duration in seconds
 MAX_AUDIO_LENGTH = int(os.getenv("MAX_AUDIO_LENGTH", "10"))
 
-# Примерная скорость речи (слов в минуту)
+# Average speech rate (words per minute)
 WORDS_PER_MINUTE = 150
 
 def estimate_audio_duration(text):
-    """Оценивает длительность аудио на основе количества слов"""
-    # Простой подсчет слов (можно улучшить, учитывая знаки препинания и другие факторы)
+    """Estimates audio duration based on word count"""
+    # Simple word count (can be improved by considering punctuation and other factors)
     word_count = len(text.split())
-    # Конвертируем слова в минуту в секунды
+    # Convert words per minute to seconds
     duration = (word_count / WORDS_PER_MINUTE) * 60
     return duration
 
@@ -67,11 +67,10 @@ Important:
     except Exception as e:
         app.logger.error(f"Error shortening text with GPT: {e}")
         # Return original text in case of error
-        
         return text
 
 def get_audio_duration_with_tts(text):
-    """Генерирует аудио с помощью OpenAI TTS и возвращает его длительность в секундах"""
+    """Generates audio using OpenAI TTS and returns its duration in seconds"""
     try:
         response = openai.audio.speech.create(
             model="tts-1",
@@ -79,12 +78,12 @@ def get_audio_duration_with_tts(text):
             input=text
         )
         
-        # Сохраняем аудио во временный файл
+        # Save audio to temporary file
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
             temp_file.write(response.content)
             temp_file_path = temp_file.name
 
-        # Используем ffprobe для получения длительности
+        # Use ffprobe to get duration
         cmd = [
             'ffprobe',
             '-v', 'quiet',
@@ -96,13 +95,13 @@ def get_audio_duration_with_tts(text):
         result = subprocess.run(cmd, capture_output=True, text=True)
         duration = float(json.loads(result.stdout)['format']['duration'])
         
-        # Удаляем временный файл
+        # Delete temporary file
         os.unlink(temp_file_path)
         
         return duration
     except Exception as e:
         app.logger.error(f"Error generating TTS audio: {e}")
-        # В случае ошибки возвращаем оценку на основе количества слов
+        # In case of error, return estimate based on word count
         return estimate_audio_duration(text)
 
 @app.route('/validate_audio_length', methods=['POST'])
@@ -110,33 +109,33 @@ def validate_audio_length():
     data = request.json
     text = data.get('text', '')
     
-    app.logger.info(f"Максимальная допустимая длительность аудио: {MAX_AUDIO_LENGTH} секунд")
+    app.logger.info(f"Maximum allowed audio duration: {MAX_AUDIO_LENGTH} seconds")
     
-    # Получаем реальную длительность аудио через TTS
+    # Get actual audio duration through TTS
     actual_duration = get_audio_duration_with_tts(text)
-    app.logger.info(f"Длительность сгенерированного аудио: {actual_duration:.2f} секунд")
+    app.logger.info(f"Generated audio duration: {actual_duration:.2f} seconds")
     
-    # Если длина превышает максимальную, сокращаем текст
+    # If length exceeds maximum, shorten the text
     if actual_duration > MAX_AUDIO_LENGTH:
-        app.logger.info(f"Аудио превышает допустимую длительность на {actual_duration - MAX_AUDIO_LENGTH:.2f} секунд")
+        app.logger.info(f"Audio exceeds allowed duration by {actual_duration - MAX_AUDIO_LENGTH:.2f} seconds")
         
-        # Вычисляем необходимый коэффициент сокращения
+        # Calculate required shortening ratio
         target_ratio = MAX_AUDIO_LENGTH / actual_duration
-        app.logger.info(f"Необходимо сократить текст в {1/target_ratio:.2f} раз")
+        app.logger.info(f"Need to shorten text by {1/target_ratio:.2f} times")
         
-        # Сокращаем текст с помощью GPT
+        # Shorten text using GPT
         modified_text = shorten_text_with_gpt(text, target_ratio)
         
-        # Проверяем длительность сокращенного текста
+        # Check duration of shortened text
         new_duration = get_audio_duration_with_tts(modified_text)
-        app.logger.info(f"Длительность после первого сокращения: {new_duration:.2f} секунд")
+        app.logger.info(f"Duration after first shortening: {new_duration:.2f} seconds")
         
-        # Если текст всё ещё слишком длинный, пробуем ещё раз сократить
+        # If text is still too long, try shortening again
         if new_duration > MAX_AUDIO_LENGTH:
-            app.logger.info(f"Требуется дополнительное сокращение, превышение на {new_duration - MAX_AUDIO_LENGTH:.2f} секунд")
+            app.logger.info(f"Additional shortening required, exceeds by {new_duration - MAX_AUDIO_LENGTH:.2f} seconds")
             modified_text = shorten_text_with_gpt(modified_text, MAX_AUDIO_LENGTH / new_duration)
             new_duration = get_audio_duration_with_tts(modified_text)
-            app.logger.info(f"Финальная длительность: {new_duration:.2f} секунд")
+            app.logger.info(f"Final duration: {new_duration:.2f} seconds")
         
         return jsonify({
             'modified': True,
@@ -146,8 +145,8 @@ def validate_audio_length():
             'max_allowed_duration': MAX_AUDIO_LENGTH
         })
     
-    # Если длина в пределах нормы, возвращаем исходный текст
-    app.logger.info(f"Длительность в пределах нормы, текст не требует сокращения")
+    # If length is within limits, return original text
+    app.logger.info(f"Duration is within limits, text doesn't need shortening")
     return jsonify({
         'modified': False,
         'text': text,
@@ -156,6 +155,6 @@ def validate_audio_length():
     })
 
 if __name__ == '__main__':
-    # Получаем порт из переменных окружения или используем порт по умолчанию
+    # Get port from environment variables or use default port
     port = int(os.getenv("API_PORT", "5000"))
     app.run(debug=True, host='0.0.0.0', port=port) 
