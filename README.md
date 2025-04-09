@@ -1,62 +1,60 @@
-# Voice Assistant с проверкой длительности аудио
+# Voice Assistant with Audio Duration Check
 
-Голосовой ассистент с функцией автоматического сокращения длинных ответов для обеспечения оптимальной длительности аудио.
+A voice assistant with automatic shortening of long responses to ensure optimal audio duration.
 
-## Особенности
+## Features
 
-- 🎙️ Голосовой интерфейс на базе LiveKit
-- 🤖 GPT-4 для генерации ответов
-- ⚡ Автоматическое сокращение длинных ответов
-- 🔊 OpenAI TTS для преобразования текста в речь
-- 📊 Точный контроль длительности аудио
-- 🌐 Веб-интерфейс на Next.js
+- 🎙️ Voice interface based on LiveKit
+- 🤖 GPT-4 for response generation
+- ⚡ Automatic shortening of long responses
+- 🔊 OpenAI TTS for text-to-speech conversion
+- 📊 Precise audio duration control
+- 🌐 Web interface on Next.js
 
-## Структура проекта
+## Project Structure
 
 ```
 project/
-├── api/                    # Backend на Python Flask
-│   ├── app.py             # Основной API сервер
-│   ├── venv/             # Виртуальное окружение для API
-│   └── requirements.txt    # Зависимости API: Flask, OpenAI
-├── voice-assistant-frontend/   # Frontend на Next.js
-│   ├── components/        # React компоненты
-│   ├── hooks/            # Кастомные React хуки
-│   └── app/              # Next.js страницы
-└── voice-pipeline-agent-python/  # LiveKit агент
-    ├── agent.py          # Логика голосового агента
-    ├── venv/            # Виртуальное окружение для агента
-    └── requirements.txt   # Зависимости агента: LiveKit, OpenAI, Deepgram
+├── api/                    # Backend on Python Flask
+│   ├── app.py             # Main API server
+│   ├── venv/             # Virtual environment for API
+│   └── requirements.txt    # API dependencies: Flask, OpenAI
+├── voice-assistant-frontend/   # Frontend on Next.js
+│   ├── components/        # React components
+│   ├── hooks/            # Custom React hooks
+│   └── app/              # Next.js pages
+└── voice-pipeline-agent-python/  # LiveKit agent
+    ├── agent.py          # Voice agent logic
+    ├── venv/            # Virtual environment for agent
+    └── requirements.txt   # Agent dependencies: LiveKit, OpenAI, Deepgram
 ```
 
-## Установка
+## Installation
 
-### Требования
+### Requirements
 
 - Python 3.8+
 - Node.js 18+
 - FFmpeg
-- OpenAI API ключ
-- LiveKit API ключи
+- OpenAI API key
+- LiveKit API keys
 
 ### Backend (API)
 
-API сервер использует Flask и OpenAI для валидации длительности аудио.
+The API server uses Flask and OpenAI for audio duration validation.
 
 ```bash
-# Создаем отдельное виртуальное окружение для API
+# Create a separate virtual environment for API
 cd api
 python -m venv venv
-source venv/bin/activate  # На Windows: venv\Scripts\activate
-pip install -r requirements.txt  # Установка Flask и других зависимостей API
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt  # Install Flask and other API dependencies
 ```
 
-
-
-Создайте `.env` файл:
+Create a `.env` file:
 ```env
 OPENAI_API_KEY=your_key_here
-MAX_AUDIO_LENGTH=15  # Максимальная длительность аудио в секундах
+MAX_AUDIO_LENGTH=15  # Maximum audio duration in seconds
 ```
 
 ### Frontend
@@ -64,11 +62,11 @@ MAX_AUDIO_LENGTH=15  # Максимальная длительность ауд�
 ```bash
 cd voice-assistant-frontend
 npm install
-# или
+# or
 pnpm install
 ```
 
-Создайте `.env.local`:
+Create `.env.local`:
 ```env
 LIVEKIT_API_KEY=your_key_here
 LIVEKIT_API_SECRET=your_secret_here
@@ -77,19 +75,17 @@ LIVEKIT_URL=your_url_here
 
 ### Voice Agent
 
-Voice Agent использует LiveKit для голосового взаимодействия и имеет свой набор зависимостей.
+Voice Agent uses LiveKit for voice interaction and has its own set of dependencies.
 
 ```bash
-# Создаем отдельное виртуальное окружение для агента
+# Create a separate virtual environment for the agent
 cd voice-pipeline-agent-python
 python -m venv venv
-source venv/bin/activate  # На Windows: venv\Scripts\activate
-pip install -r requirements.txt  # Установка LiveKit и других зависимостей агента
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt  # Install LiveKit and other agent dependencies
 ```
 
-
-
-Создайте `.env.local`:
+Create `.env.local`:
 ```env
 LIVEKIT_API_KEY=your_key_here
 LIVEKIT_API_SECRET=your_secret_here
@@ -98,44 +94,71 @@ OPENAI_API_KEY=your_key_here
 AUDIO_LENGTH_API_URL=http://localhost:5000/validate_audio_length
 ```
 
-## Запуск
+## Running the Application
 
-1. Запустите API сервер:
+1. Start the API server:
 ```bash
 cd api
-source venv/bin/activate  # На Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 flask run
 ```
 
-2. Запустите Frontend:
+2. Start the Frontend:
 ```bash
 cd voice-assistant-frontend
 npm run dev
-# или
+# or
 pnpm dev
 ```
 
-3. Запустите Voice Agent:
+3. Start the Voice Agent:
 ```bash
 cd voice-pipeline-agent-python
-source venv/bin/activate  # На Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 python agent.py dev
 ```
 
-## Как это работает
+## How It Works
 
-1. Пользователь говорит с ассистентом через веб-интерфейс
-2. Voice Agent преобразует речь в текст и генерирует ответ через GPT
-3. Перед озвучиванием ответа проверяется его длительность через API сервер
-4. Если ответ слишком длинный, он автоматически сокращается с сохранением смысла
-5. Сокращенный текст преобразуется в речь и воспроизводится
+1. User speaks with the assistant through the web interface
+2. Voice Agent converts speech to text and generates a response using GPT
+3. Before converting to speech, the response duration is checked via the API server
+4. If the response is too long, it is automatically shortened while preserving meaning
+5. The shortened text is converted to speech and played back
 
-## Конфигурация
+## Configuration
 
-### Максимальная длительность аудио
+### Maximum Audio Duration
 
-Установите максимальную длительность в секундах в `.env` файле API:
+Set the maximum duration in seconds in the API's `.env` file:
 ```env
 MAX_AUDIO_LENGTH=15
 ```
+
+### TTS Voice Selection
+
+You can change the TTS voice in the agent's `.env` file:
+```env
+TTS_VOICE=alloy  # Available options: alloy, echo, fable, onyx, nova, shimmer
+```
+
+## Troubleshooting
+
+### Text and Audio Synchronization Issues
+
+If you notice that the displayed text doesn't match the audio:
+1. Make sure the API server is running and accessible
+2. Check that the `AUDIO_LENGTH_API_URL` in the agent's `.env` file is correct
+3. Verify that the maximum audio duration is set appropriately
+
+### Virtual Environment Issues
+
+If you encounter dependency-related errors:
+1. Make sure you're using the correct virtual environment for each component
+2. Verify that all dependencies are installed in the appropriate environment
+3. Remember that API and Voice Agent use different virtual environments with different sets of dependencies
+
+## License
+
+MIT
 
